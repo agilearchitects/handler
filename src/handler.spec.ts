@@ -1,18 +1,18 @@
 import { describe, it, expect } from "@jest/globals";
-import { Handler, next, basicHandle } from "./handler";
+import { Handler, next, handle } from "./handler";
 
 describe("Handler", () => {
   describe("register handler", () => {
     it("should be able to execute handler", async () => {
       let container: string = "";
-      await basicHandle(
+      await handle(
         () => { container = `${container}a`; return 1; },
       );
       expect(container).toEqual("a");
     });
     it("should be able to execute multiple handlers", async () => {
       let container: string = "";
-      await basicHandle(
+      await handle(
         (_, next: next) => {
           container = `${container}a`; next();
         },
@@ -24,7 +24,7 @@ describe("Handler", () => {
     });
     it("should be able to execute additional handlers with next", async () => {
       let container: string = "";
-      await basicHandle(
+      await handle(
         (_, next: next) => { container = `${container}a`; next(() => { container = `${container}b`; return 1; }); }
       );
       expect(container).toEqual("ab");
@@ -32,7 +32,7 @@ describe("Handler", () => {
     it("should be able to throw error", async () => {
       const errorMessage: string = "some error";
       try {
-        await basicHandle(
+        await handle(
           () => { throw(new Error(errorMessage)); }
         );
       } catch(error: unknown) { expect((error as Error).message).toEqual(errorMessage); }
@@ -41,7 +41,7 @@ describe("Handler", () => {
       const errorMessage: string = "some error";
       let container: string = "";
       try {
-        await basicHandle(
+        await handle(
           (_, next) => {
             container = `${container}a`;
             next(() => { throw(new Error(errorMessage)); });
@@ -56,14 +56,14 @@ describe("Handler", () => {
     describe("async", () => {
       it("should be able to execute handler", async () => {
         let container: string = "";
-        await basicHandle(
+        await handle(
           async () => { await waitFor(100); container = `${container}a`; return 1; }
         );
         expect(container).toEqual("a");
       });
       it("should be able to execute multiple handlers", async () => {
         let container: string = "";
-        await basicHandle(
+        await handle(
           async (_, next: next) => {
             await waitFor(100);
             container = `${container}a`;
@@ -78,7 +78,7 @@ describe("Handler", () => {
       });
       it("should be able to execute multiple handlers within next", async () => {
         let container: string = "";
-        await basicHandle(
+        await handle(
           (_, next: next) => {
             container = `${container}a`;
             next((_, next: next) => {
@@ -95,7 +95,7 @@ describe("Handler", () => {
       it("should be able to throw error", async () => {
         const errorMessage: string = "some error";
         try {
-          await basicHandle(
+          await handle(
             async () => { await waitFor(100); throw(new Error(errorMessage)); }
           );
         } catch(error: unknown) { expect((error as Error).message).toEqual(errorMessage); }
@@ -104,7 +104,7 @@ describe("Handler", () => {
         const errorMessage: string = "some error";
         let container: string = "";
         try {
-          await basicHandle(
+          await handle(
             async (_, next) => {
               await waitFor(100);
               container = `${container}a`;
@@ -121,7 +121,7 @@ describe("Handler", () => {
         const errorMessage: string = "some error";
         let container: string = "";
         try {
-          await basicHandle(
+          await handle(
             async (_, next) => {
               container = `${container}a`;
               next(async () => {
@@ -142,14 +142,14 @@ describe("Handler", () => {
   describe("response", () => {
     it("should be able to send response as return value", async () => {
       const message = "hello world";
-      const response: unknown = await basicHandle(
+      const response: unknown = await handle(
         () => message
       );
       expect(response).toEqual(message);
     });
     it("should be able to send response with send method", async () => {
       const message = "hello world";
-      const response: unknown = await basicHandle(
+      const response: unknown = await handle(
         (handler: Handler) => handler.send(message),
       );
       expect(response).toEqual(message);
@@ -159,7 +159,7 @@ describe("Handler", () => {
     it("should be able to modify response before sending", async () => {
       const originalResponse: string = "hello world";
       const newResponse: string = "foo bar";
-      const result = await basicHandle<string>(
+      const result = await handle<string>(
         (handler: Handler<string>, next: next<string>) => {
           handler.beforeSend(() => newResponse);
           next();
@@ -171,7 +171,7 @@ describe("Handler", () => {
     it("should be able to modify response before sending with return", async () => {
       const originalResponse: string = "hello world";
       const newResponse: string = "foo bar";
-      const result = await basicHandle<string>(
+      const result = await handle<string>(
         (handler: Handler<string>, next: next<string>) => {
           handler.beforeSend(() => newResponse);
           next();

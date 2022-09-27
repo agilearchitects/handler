@@ -181,7 +181,7 @@ export class HttpHandler extends Handler<response | body | number> {
   }
 }
 
-export const handle = async (handler: HttpHandler, ...handlers: handlerMethod[]): Promise<response> => {
+const _handle = async (handler: HttpHandler, ...handlers: handlerMethod[]): Promise<response> => {
   const response: response | body | number = await baseHandle(handler, ...handlers);
 
   if(typeof response === "object" && response !== null && "body" in response) {
@@ -207,4 +207,13 @@ const headerKeysToLowercase = (headers: headers): headers => {
   }, {});
 };
 
-export const basicHandle = (method: Method, url: string, headers: headers, body: body, ...handlers: handlerMethod[]): Promise<response> => handle(new HttpHandler({ method, url, headers, body }), ...handlers);
+export function handle(method: Method, url: string, headers: headers, body: body, ...handlers: handlerMethod[]): Promise<response>;
+export function handle(handler: HttpHandler, ...handlers: handlerMethod[]): Promise<response>;
+export function handle(method: Method | HttpHandler, url: string | handlerMethod, headers: headers | handlerMethod, body: body | handlerMethod, ...handlers: handlerMethod[]): Promise<response> {
+  if(method instanceof HttpHandler && typeof url === "function" && typeof headers === "function" && typeof body === "function") {
+    return _handle(method, ...[url, headers, body, ...handlers]);
+  } else if(!(method instanceof HttpHandler) && typeof url !== "function" && typeof headers !== "function" && typeof body !== "function") {
+    return _handle(new HttpHandler({ method, url, headers, body }), ...handlers);
+  }
+  throw new Error("Method is called with incorrect parameters");
+}

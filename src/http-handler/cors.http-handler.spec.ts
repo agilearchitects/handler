@@ -1,10 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
-import { basicHandle, HttpHandler, HttpHandlerError, Method } from "../http-handler";
+import { handle, HttpHandler, HttpHandlerError, Method } from "../http-handler";
 import { corsHttpHandler } from "./cors.http-handler";
 
 describe("corsHttpHandler", () => {
   it("should send * as default allowed origin", async () => {
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", { }, null,
+    const response = await handle(Method.GET, "http://127.0.0.1", { }, null,
       corsHttpHandler(),
       (handler: HttpHandler) => { handler.send(null); }
     );
@@ -12,7 +12,7 @@ describe("corsHttpHandler", () => {
   });
   it("should send matching origin from regexp", async () => {
     const origin =  "http://www.test.test";
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", { origin }, null,
+    const response = await handle(Method.GET, "http://127.0.0.1", { origin }, null,
       corsHttpHandler(/^http:\/\/.+\.test.test$/),
       (handler: HttpHandler) => { handler.send(null); }
     );
@@ -21,7 +21,7 @@ describe("corsHttpHandler", () => {
   it("should send regexp string if not matching", async () => {
     const origin =  "http://www.test.test";
     const regexp = /^http:\/\/.+\.wrong.com$/;
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", { origin }, null,
+    const response = await handle(Method.GET, "http://127.0.0.1", { origin }, null,
       corsHttpHandler(regexp),
       (handler: HttpHandler) => { handler.send(null); }
     );
@@ -29,7 +29,7 @@ describe("corsHttpHandler", () => {
   });
   it("should send matching origin from array", async () => {
     const origins: string[] = ["http://www.test.test", "http://api.test.test"];
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", { origin: origins[0] }, null,
+    const response = await handle(Method.GET, "http://127.0.0.1", { origin: origins[0] }, null,
       corsHttpHandler(origins),
       (handler: HttpHandler) => { handler.send(null); }
     );
@@ -38,7 +38,7 @@ describe("corsHttpHandler", () => {
   it("should send array as string if not matching", async () => {
     const origin = "http://www.test.test";
     const origins: string[] = ["http://www.wrong.com", "http://api.test.test"];
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", { origin }, null,
+    const response = await handle(Method.GET, "http://127.0.0.1", { origin }, null,
       corsHttpHandler(origins),
       (handler: HttpHandler) => { handler.send(null); }
     );
@@ -47,7 +47,7 @@ describe("corsHttpHandler", () => {
   it("should send additional headers on option request", async () => {
     const allowedHeaders = ["FOO", "BAR"];
     const allowedMethods = [Method.GET];
-    const response = await basicHandle(Method.OPTIONS, "http://127.0.0.1", { }, null,
+    const response = await handle(Method.OPTIONS, "http://127.0.0.1", { }, null,
       corsHttpHandler("*", { allowedHeaders, allowedMethods }),
       (handler: HttpHandler) => { handler.send(null); }
     );
@@ -57,7 +57,7 @@ describe("corsHttpHandler", () => {
   });
   it("should send headers on error", async () => {
     try {
-      await basicHandle(Method.GET, "http://127.0.0.1", { }, null,
+      await handle(Method.GET, "http://127.0.0.1", { }, null,
         corsHttpHandler(),
         () => { throw new HttpHandlerError({ status: 404 }); }
       );

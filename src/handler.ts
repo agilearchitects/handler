@@ -103,7 +103,7 @@ export class Handler<T = unknown> {
   }
 }
 
-export const handle = <T = unknown, R extends Handler<T> = Handler<T>>(handler: R, ...handlers: handlerMethod<T, R>[]): Promise<T> => {
+const _handle = <T = unknown, R extends Handler<T> = Handler<T>>(handler: R, ...handlers: handlerMethod<T, R>[]): Promise<T> => {
   return new Promise((resolve, reject) => {
     // Resolve on send
     handler.onSend((response: T) => resolve(response));
@@ -122,7 +122,7 @@ export const handle = <T = unknown, R extends Handler<T> = Handler<T>>(handler: 
           nextWasCalled = true;
           try {
             // Call itself with provided nextHandlers concatinated with root handlers minus the first handler
-            const response = await handle(handler, ...nextHandlers, ...handlers.slice(1));
+            const response = await _handle(handler, ...nextHandlers, ...handlers.slice(1));
             handler.send(response);
           } catch (error: unknown) {
             handler.reject(error);
@@ -146,4 +146,12 @@ export const handle = <T = unknown, R extends Handler<T> = Handler<T>>(handler: 
   });
 };
 
-export const basicHandle = <T = unknown>(...handlers: handlerMethod<T, Handler<T>>[]): Promise<T> => handle(new Handler<T>(), ...handlers);
+export function handle<T = unknown, R extends Handler<T> = Handler<T>>(handler: R, ...handlers: handlerMethod<T, R>[]): Promise<T>;
+export function handle<T = unknown>(...handlers: handlerMethod<T, Handler<T>>[]): Promise<T>;
+export function handle<T = unknown, R extends Handler<T> = Handler<T>>(handler: R | handlerMethod<T, Handler<T>>, ...handlers: handlerMethod<T, Handler<T>>[]): Promise<T> {
+  if(typeof handler !== "function") {
+    return _handle(handler, ...handlers);
+  }
+
+  return _handle(new Handler<T>(), ...[handler, ...handlers]);
+}

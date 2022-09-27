@@ -1,32 +1,32 @@
 import * as stream from "stream";
 import { describe, it, expect } from "@jest/globals";
-import { basicHandle, HttpHandler, Method, response, next } from "./http-handler";
+import { handle, HttpHandler, Method, response, next } from "./http-handler";
 
 describe("httpHandler", () => {
   it("should be able to send response object", async () => {
     const body: string = "1";
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", {}, "",
+    const response = await handle(Method.GET, "http://127.0.0.1", {}, "",
       () => { return { body, headers: {}, status: 200} ; }
     );
     expect(response.body).toEqual(body);
   });
   it("should be able to send body object", async () => {
     const body: string = "1";
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", {}, "",
+    const response = await handle(Method.GET, "http://127.0.0.1", {}, "",
       () => { return body; },
     );
     expect(response.body).toEqual(body);
   });
   it("should be able to send status", async () => {
     const status: number = 404;
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", {}, "",
+    const response = await handle(Method.GET, "http://127.0.0.1", {}, "",
       () => status
     );
     expect(response.status).toEqual(status);
   });
   it("should be able to send response object using send method", async () => {
     const body: string = "1";
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", {}, "",
+    const response = await handle(Method.GET, "http://127.0.0.1", {}, "",
       (handler: HttpHandler) => { handler.send(body); }
     );
     expect(response.body).toEqual(body);
@@ -35,7 +35,7 @@ describe("httpHandler", () => {
     const payload: string = "ABCDEFGHOJKLMNOPQRSTUVQ";
     const data: string[] = splitStringEvery(payload, 2);
     const body: stream.PassThrough = new stream.PassThrough();
-    const response: response = await basicHandle(Method.GET, "http://127.0.0.1", {}, null, (handler: HttpHandler) => handler.send(body));
+    const response: response = await handle(Method.GET, "http://127.0.0.1", {}, null, (handler: HttpHandler) => handler.send(body));
     
     if(response.body instanceof stream.Readable) {
       let responseBody = "";
@@ -67,7 +67,7 @@ describe("httpHandler", () => {
       body.emit("end");
     })();
 
-    const response = await basicHandle(Method.GET, "http://127.0.0.1", {}, body, (handler: HttpHandler) => {
+    const response = await handle(Method.GET, "http://127.0.0.1", {}, body, (handler: HttpHandler) => {
       if(handler.body instanceof stream.Readable) {
         let responseBody = "";
         handler.body.on("data", (chunk: unknown) => {
@@ -84,7 +84,7 @@ describe("httpHandler", () => {
     it("should be able to modify response before send", async () => {
       const body: string = "hello world";
       const newStatus: number = 404;
-      const response: response = await basicHandle(Method.GET, "http://127.0.0.1", {}, "",
+      const response: response = await handle(Method.GET, "http://127.0.0.1", {}, "",
         (handler: HttpHandler, next: next) => { handler.beforeSend((response: response) => ({ ...response, status: newStatus })); next(); },
         () => ({ body, headers: {}, status: 200 })
       );

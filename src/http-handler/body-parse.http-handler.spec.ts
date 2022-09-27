@@ -1,12 +1,12 @@
 import * as stream from "stream";
 import { describe, expect, it } from "@jest/globals";
-import { basicHandle, HttpHandler, Method } from "../http-handler";
+import { handle, HttpHandler, Method } from "../http-handler";
 import { bodyParseHttpHandler } from "./body-parse.http-handler";
 
 describe("bodyParseHttpHandler", () => {
   it("should be able to parse json paylaod", () => {
     const payload = { foo: "bar" };
-    basicHandle(Method.GET, "http://127.0.0.1", { "content-type": "application/json" }, JSON.stringify(payload),
+    handle(Method.GET, "http://127.0.0.1", { "content-type": "application/json" }, JSON.stringify(payload),
       bodyParseHttpHandler(),
       (handler: HttpHandler) => { expect(handler.parsedBody).toEqual(payload); handler.send(null); }
     );
@@ -15,7 +15,7 @@ describe("bodyParseHttpHandler", () => {
     const foo: string = "bar";
     const hello: string = "world";
     const payload: string = `foo=${foo}&hello=${hello}`;
-    basicHandle(Method.GET, "http://127.0.0.1", { "content-type": "application/form-data" }, payload,
+    handle(Method.GET, "http://127.0.0.1", { "content-type": "application/form-data" }, payload,
       bodyParseHttpHandler(),
       (handler: HttpHandler) => {
         const parsedBody: URLSearchParams = handler.getPayload("parsedBody", new URLSearchParams());
@@ -30,7 +30,7 @@ describe("bodyParseHttpHandler", () => {
     const data: string[] = splitStringEvery(JSON.stringify(payload), 5);
     const body = new stream.PassThrough();
 
-    basicHandle(Method.GET, "http://127.0.0.1", { "content-type": "application/json" }, body,
+    handle(Method.GET, "http://127.0.0.1", { "content-type": "application/json" }, body,
       bodyParseHttpHandler(),
       (handler: HttpHandler) => {
         expect(handler.parsedBody).toEqual(payload); handler.send(null);

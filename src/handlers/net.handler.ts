@@ -1,7 +1,7 @@
 import * as net from "net";
 import * as stream from "stream";
 import { handlerError } from "../handler";
-import { basicHandle, headers, Method, handlerMethod, response, HttpHandlerError } from "../http-handler";
+import { handle, headers, Method, handlerMethod, response, HttpHandlerError, HttpHandler } from "../http-handler";
 
 export interface IIncomingMessage<SOCKET extends net.Socket = net.Socket> extends stream.Readable {
   socket: SOCKET;
@@ -27,6 +27,7 @@ export interface IHttp {
 }
 
 interface netHandlerOptions {
+  handler?: HttpHandler,
   http: IHttp;
   onError?: (error: unknown) => void;
 }
@@ -51,7 +52,7 @@ export function netHandler(options: IHttp | netHandlerOptions, ...handlers: hand
 
     let handleResponse: response;
     try {
-      handleResponse = await basicHandle(method, url, headers, request, ...handlers);
+      handleResponse = "handler" in options && options.handler !== undefined ? await handle(options.handler, ...handlers) : await handle(method, url, headers, request, ...handlers);
     } catch(error: unknown) {
       if("onError" in options && options.onError !== undefined) {
         options.onError(error);

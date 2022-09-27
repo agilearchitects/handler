@@ -1,6 +1,6 @@
 import { describe, it, expect } from "@jest/globals";
 import { handlerMethod, HttpHandler } from "../http-handler";
-import { lambaHandler } from "./lambda.handler";
+import { lambdaHandler } from "./lambda.handler";
 
 describe("LambdaHandler", () => {
   const handler: handlerMethod = (handler: HttpHandler) => {
@@ -22,7 +22,7 @@ describe("LambdaHandler", () => {
   };
   describe("Query string", () => {
     it("should parse request with query string", async () => {
-      const lambda = lambaHandler({}, handler);
+      const lambda = lambdaHandler(handler);
       const request = JSON.parse((await lambda({
         headers: { Host: "127.0.0.1", "X-Forwarded-Proto": "http", "X-Forwarded-Port": "80"},
         path: "/path/to/resource",
@@ -34,7 +34,7 @@ describe("LambdaHandler", () => {
       expect(request.url).toEqual("http://127.0.0.1/path/to/resource?foo=bar&hello=world&hello=world2");
     });
     it("should parse request without query string", async () => {
-      const lambda = lambaHandler({}, handler);
+      const lambda = lambdaHandler(handler);
       const request = JSON.parse((await lambda({
         headers: { Host: "127.0.0.1", "X-Forwarded-Proto": "http", "X-Forwarded-Port": "80"},
         path: "/path/to/resource",
@@ -48,7 +48,7 @@ describe("LambdaHandler", () => {
   });
   describe("Port", () => {
     it("should remove port if matching default for protocol", async () => {
-      const lambda = lambaHandler({}, handler);
+      const lambda = lambdaHandler(handler);
       const httpRequest = JSON.parse((await lambda({
         headers: { Host: "127.0.0.1", "X-Forwarded-Proto": "http", "X-Forwarded-Port": "80"},
         path: "/path/to/resource",
@@ -69,7 +69,7 @@ describe("LambdaHandler", () => {
       expect(httpsRequest.url).toEqual("https://127.0.0.1/path/to/resource");
     });
     it("should have port in URL if not matching protocol default", async () => {
-      const lambda = lambaHandler({}, handler);
+      const lambda = lambdaHandler(handler);
       const httpRequest = JSON.parse((await lambda({
         headers: { Host: "127.0.0.1", "X-Forwarded-Proto": "http", "X-Forwarded-Port": "443"},
         path: "/path/to/resource",
